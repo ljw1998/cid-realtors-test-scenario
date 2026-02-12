@@ -714,7 +714,7 @@
                     </div>
                     <div class="summary-card failed">
                         <h3 id="failedCount">0</h3>
-                        <p>Failed ✗</p>
+                        <p>Failed ✗</p>why
                     </div>
                 </div>
             </div> -->
@@ -788,9 +788,9 @@
             let royalty = 0;
             const breakdown = [];
             const brackets = [
-                { limit: 3000000, rate: 0.05, name: 'RM 0 - 3M' },
-                { limit: 6000000, rate: 0.04, name: 'RM 3M - 6M' },
-                { limit: 10000000, rate: 0.03, name: 'RM 6M - 10M' },
+                { limit: 2999999, rate: 0.05, name: 'RM 0 - RM2,999,999' },
+                { limit: 5999999, rate: 0.04, name: 'RM 3M - RM5,999,999' },
+                { limit: 9999999, rate: 0.03, name: 'RM 6M - RM9,999,999' },
                 { limit: Infinity, rate: 0.02, name: 'RM 10M+' }
             ];
 
@@ -1263,10 +1263,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 500, // 5%
-                    personalCommission: 6000, // 60%
-                    totalOverrides: 0, // 0%
-                    cdCommission: 3500 // 35% - CD gets all remaining
+                    hqRoyalty: 500.00, // 5%
+                    personalCommission: 6000.00, // 60%
+                    totalOverrides: 0.00, // 0%
+                    cdCommission: 3500.00 // 35% - CD gets all remaining
                 }
             },
             {
@@ -1292,10 +1292,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 1000, // 5%
-                    personalCommission: 18000, // 90%
-                    totalOverrides: 80, // 0.4%
-                    cdCommission: 920 // 4.6% - CD gets all remaining
+                    hqRoyalty: 1000.00, // 5%
+                    personalCommission: 18000.00, // 90%
+                    totalOverrides: 80.00, // 0.4%
+                    cdCommission: 920.00 // 4.6% - CD gets all remaining
                 }
             },
             {
@@ -1321,10 +1321,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 2000, // 5%
-                    personalCommission: 26000, // 65%
-                    totalOverrides: 5200, // 13% gap
-                    cdCommission: 6800 // 17% - CD gets all remaining
+                    hqRoyalty: 2000.00, // 5%
+                    personalCommission: 26000.00, // 65%
+                    totalOverrides: 5200.00, // 13% gap
+                    cdCommission: 6800.00 // 17% - CD gets all remaining
                 }
             },
             {
@@ -1342,18 +1342,18 @@
 
                     const agent = new Agent('A1', '75% REN', 'REN', 'AGENT', 'TL1');
                     agent.lifetimeCommission = 100000;
-                    agent.commissionInput = 300000;
+                    agent.commissionInput = 10000000;
                     tl.children.push(agent);
 
                     testAgents.push(cd, tl, agent);
                     return agent;
                 },
-                branchYTD: 2900000,
+                branchYTD: 0,
                 expected: {
-                    hqRoyalty: 13000, // 4.33% (100k @ 5% + 200k @ 4%)
-                    personalCommission: 225000, // 75%
-                    totalOverrides: 24000, // 8% (75% tier = 8% GAP)
-                    cdCommission: 38000 // 12.67% - CD gets all remaining
+                    hqRoyalty: 389999.97, // Progressive: 2,999,999@5% + 3M@4% + 4M@3% + 1@2%
+                    personalCommission: 7500000.00, // 75%
+                    totalOverrides: 800000.00, // 8% GAP (75% tier)
+                    cdCommission: 1310000.03 // CD gets all remaining
                 }
             },
             {
@@ -1389,10 +1389,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 5000,
-                    personalCommission: 70000,
-                    totalOverrides: 13000,
-                    cdCommission: 12000
+                    hqRoyalty: 5000.00,
+                    personalCommission: 70000.00,
+                    totalOverrides: 13000.00,
+                    cdCommission: 12000.00
                 }
             },
             {
@@ -1439,10 +1439,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 3000, // 5%
-                    personalCommission: 48000, // 80%
-                    totalOverrides: 3600, // 6% (2% Mid REN + 4% GAP Senior TL) - CD gets remainder, not override
-                    cdCommission: 5400 // 9% - CD gets all remaining
+                    hqRoyalty: 3000.00, // 5%
+                    personalCommission: 48000.00, // 80%
+                    totalOverrides: 3600.00, // 6% (2% Mid REN + 4% GAP Senior TL) - CD gets remainder, not override
+                    cdCommission: 5400.00 // 9% - CD gets all remaining
                 }
             },
             {
@@ -1458,10 +1458,10 @@
                 },
                 branchYTD: 5000000,
                 expected: {
-                    hqRoyalty: 8000, // 4%
-                    personalCommission: 190000, // 95%
-                    totalOverrides: 0, // 0%
-                    cdCommission: 2000 // 1% - CD gets all remaining
+                    hqRoyalty: 8000.00, // 4%
+                    personalCommission: 190000.00, // 95%
+                    totalOverrides: 0.00, // 0%
+                    cdCommission: 2000.00 // 1% - CD gets all remaining
                 }
             },
             {
@@ -1482,10 +1482,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 1500, // 5%
-                    personalCommission: 18000, // 60%
-                    totalOverrides: 0, // 0% - CD gets remainder only, never percentage override
-                    cdCommission: 10500 // 35% - CD gets all remaining
+                    hqRoyalty: 1500.00, // 5%
+                    personalCommission: 18000.00, // 60%
+                    totalOverrides: 0.00, // 0% - CD gets remainder only, never percentage override
+                    cdCommission: 10500.00 // 35% - CD gets all remaining
                 }
             },
             {
@@ -1512,10 +1512,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 2500, // 5%
-                    personalCommission: 45000, // 90%
-                    totalOverrides: 200, // 0.4% reduced
-                    cdCommission: 2300 // 4.6% - CD gets all remaining
+                    hqRoyalty: 2500.00, // 5%
+                    personalCommission: 45000.00, // 90%
+                    totalOverrides: 200.00, // 0.4% reduced
+                    cdCommission: 2300.00 // 4.6% - CD gets all remaining
                 }
             },
             {
@@ -1549,10 +1549,10 @@
                 },
                 branchYTD: 0,
                 expected: {
-                    hqRoyalty: 4000, // 5%
-                    personalCommission: 56000, // 70%
-                    totalOverrides: 9600, // 12% (11% gap + 1%) - CD gets remainder, not override
-                    cdCommission: 10400 // 13% - CD gets all remaining
+                    hqRoyalty: 4000.00, // 5%
+                    personalCommission: 56000.00, // 70%
+                    totalOverrides: 9600.00, // 12% (11% gap + 1%) - CD gets remainder, not override
+                    cdCommission: 10400.00 // 13% - CD gets all remaining
                 }
             },
             {
