@@ -1,0 +1,2661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Calculator Test Scenarios v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-scenario {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .test-scenario.passed {
+            border-color: #38ef7d;
+        }
+
+        .test-scenario.failed {
+            border-color: #ff6a00;
+        }
+
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scenario-title {
+            font-size: 1.8em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .status-badge.passed {
+            background: #38ef7d;
+            color: white;
+        }
+
+        .status-badge.failed {
+            background: #ff6a00;
+            color: white;
+        }
+
+        /* Hierarchy Tree Styles (copied from main simulator) */
+        .tree {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            clear: both;
+            overflow: auto;
+        }
+
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            transition: all 0.5s;
+            list-style-type: none;
+        }
+
+        .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #ccc;
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #ccc;
+        }
+
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        .tree li:first-child::before, .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        .tree li:last-child::before {
+            border-right: 2px solid #ccc;
+            border-radius: 0 5px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #ccc;
+            width: 0;
+            height: 20px;
+        }
+
+        .tree-node {
+            border: 3px solid #667eea;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            display: inline-block;
+            background: white;
+            transition: all 0.3s;
+            min-width: 180px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tree-node.cd {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-color: #f5576c;
+        }
+
+        .tree-node.tl {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-color: #00f2fe;
+        }
+
+        .tree-node.agent {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border-color: #38f9d7;
+        }
+
+        .node-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .node-type {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .node-tier {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .node-details {
+            font-size: 0.85em;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .node-commission {
+            background: rgba(255,255,255,0.2);
+            padding: 5px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        /* Side-by-side layout */
+        .side-by-side-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        .hierarchy-column {
+            flex: 0 0 30%;
+            min-width: 0;
+        }
+
+        .calculation-column {
+            flex: 0 0 70%;
+            min-width: 0;
+        }
+
+        /* Calculation Breakdown */
+        .calculation-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .calculation-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+        }
+
+        .calc-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .calc-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .calc-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .calc-value.match {
+            color: #38ef7d;
+        }
+
+        .calc-value.mismatch {
+            color: #ff6a00;
+        }
+
+        .override-detail {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .override-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .override-item {
+            padding: 8px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison-column {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .comparison-column h4 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .run-test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .run-test-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .summary-card h3 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .summary-card.total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .summary-card.passed {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .summary-card.failed {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+
+        .hq-royalty-breakdown {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ff9800;
+        }
+
+        .hq-royalty-item {
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95em;
+        }
+
+        /* Agent Tooltip Styles */
+        .agent-tooltip {
+            position: fixed;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 10000;
+            min-width: 320px;
+            max-width: 380px;
+            display: none;
+            pointer-events: none;
+        }
+
+        .agent-tooltip.active {
+            display: block;
+            pointer-events: auto; /* Enable mouse events when active */
+        }
+
+        .tooltip-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.1em;
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .tooltip-row .label {
+            color: #6c757d;
+        }
+
+        .tooltip-row .value {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .tooltip-section {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tooltip-section.info {
+            background: #e7f3ff;
+        }
+
+        .tooltip-divider {
+            border-top: 2px solid #28a745;
+            padding-top: 8px;
+            margin-top: 5px;
+        }
+
+        .tooltip-button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tooltip-button:hover {
+            background: #5568d3;
+            transform: scale(1.02);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-section {
+            margin-bottom: 30px;
+        }
+
+        .modal-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .modal-table thead {
+            background: #667eea;
+            color: white;
+        }
+
+        .modal-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .modal-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .modal-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .salesperson-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .salesperson-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .salesperson-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .salesperson-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .view-detail-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .view-detail-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .salesperson-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .summary-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal Dialog for Detailed Breakdown -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Agent Breakdown</h2>
+                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Commission Test Scenarios</h1>
+            <p>With Full Hierarchy Visualization & Transparent Calculations</p>
+        </div>
+
+        <div class="content">
+            <!-- <div id="summary" style="display: none;">
+                <div class="summary-cards">
+                    <div class="summary-card total">
+                        <h3 id="totalCount">0</h3>
+                        <p>Total Tests</p>
+                    </div>
+                    <div class="summary-card passed">
+                        <h3 id="passedCount">0</h3>
+                        <p>Passed ✓</p>
+                    </div>
+                    <div class="summary-card failed">
+                        <h3 id="failedCount">0</h3>
+                        <p>Failed ✗</p>
+                    </div>
+                </div>
+            </div> -->
+
+            <div id="scenarios"></div>
+        </div>
+    </div>
+
+    <!-- Agent Tooltip -->
+    <div id="agentTooltip" class="agent-tooltip"></div>
+
+    <script>
+        let allScenariosData = {}; // Store data for all scenarios by scenario index
+        // ===== AGENT CLASS =====
+        class Agent {
+            constructor(id, name, type, rank, parentId = null) {
+                this.id = id;
+                this.name = name;
+                this.type = type;
+                this.rank = rank;
+                this.parentId = parentId;
+                this.lifetimeCommission = 0;
+                this.currentYearSales = 0;
+                this.directRecruits = 0;
+                this.commissionInput = 0;
+                this.manualCommissionTier = null;
+                this.children = [];
+            }
+
+            getCommissionTier() {
+                if (this.manualCommissionTier !== null) {
+                    return this.manualCommissionTier;
+                }
+
+                if (this.rank === 'CD') return 0.95;
+                if (this.type === 'REA') return 0.90;
+                if (this.currentYearSales >= 1000000) return 0.90;
+
+                let baseTier = 0.60;
+                if (this.lifetimeCommission >= 300000) baseTier = 0.85;
+                else if (this.lifetimeCommission >= 200000) baseTier = 0.80;
+                else if (this.lifetimeCommission >= 100000) baseTier = 0.75;
+                else if (this.lifetimeCommission >= 50000) baseTier = 0.70;
+                else if (this.lifetimeCommission >= 25000) baseTier = 0.65;
+
+                return baseTier;
+            }
+
+            getUplineChain() {
+                const chain = [];
+                let currentId = this.parentId;
+                // No hard limit - return ALL uplines in the chain
+                // The commission calculation logic handles generation caps and pause rules
+                while (currentId) {
+                    const parent = testAgents.find(a => a.id === currentId);
+                    if (parent) {
+                        chain.push(parent);
+                        currentId = parent.parentId;
+                    } else {
+                        break;
+                    }
+                }
+                return chain;
+            }
+        }
+
+        let testAgents = [];
+
+        // ===== CALCULATION FUNCTIONS =====
+        function calculateMarginalHQRoyalty(branchYTD, transactionAmount) {
+            let royalty = 0;
+            const breakdown = [];
+            const brackets = [
+                { limit: 3000000, rate: 0.05, name: 'RM 0 - 3M' },
+                { limit: 6000000, rate: 0.04, name: 'RM 3M - 6M' },
+                { limit: 10000000, rate: 0.03, name: 'RM 6M - 10M' },
+                { limit: Infinity, rate: 0.02, name: 'RM 10M+' }
+            ];
+
+            let remainingAmount = transactionAmount;
+            let currentPosition = branchYTD;
+
+            for (const bracket of brackets) {
+                if (currentPosition >= bracket.limit) continue;
+
+                const spaceInBracket = bracket.limit - currentPosition;
+                const amountInThisBracket = Math.min(remainingAmount, spaceInBracket);
+
+                if (amountInThisBracket > 0) {
+                    const royaltyAmount = amountInThisBracket * bracket.rate;
+                    royalty += royaltyAmount;
+                    breakdown.push({
+                        bracketName: bracket.name,
+                        rate: bracket.rate,
+                        amount: amountInThisBracket,
+                        royaltyAmount: royaltyAmount
+                    });
+                }
+
+                remainingAmount -= amountInThisBracket;
+                currentPosition += amountInThisBracket;
+
+                if (remainingAmount <= 0) break;
+            }
+
+            return { total: royalty, breakdown };
+        }
+
+        // Calculate if all tests passed for Examples 14 and 15
+        function calculateAllTestsPassed(exampleIndex, scenarioData) {
+            const expectedValues = getExpectedValues(exampleIndex);
+
+            for (const saleResult of scenarioData.salesResults) {
+                const sellerId = saleResult.salesperson.id;
+                const expected = expectedValues[sellerId];
+                if (!expected) continue;
+
+                const actual = {
+                    hqRoyalty: saleResult.hqRoyaltyData.total,
+                    personal: saleResult.result.personalCommission,
+                    overrides: {},
+                    totalOverrides: saleResult.result.totalOverrides,
+                    cdCommission: saleResult.result.cdCommission
+                };
+
+                saleResult.result.overrides.forEach(o => {
+                    if (o.amount > 0) {
+                        actual.overrides[o.upline.id] = o.amount;
+                    }
+                });
+
+                // Check basic values
+                if (Math.abs(actual.hqRoyalty - expected.hqRoyalty) >= 0.01) return false;
+                if (Math.abs(actual.personal - expected.personal) >= 0.01) return false;
+                if (Math.abs(actual.totalOverrides - expected.totalOverrides) >= 0.01) return false;
+                if (Math.abs(actual.cdCommission - expected.cdCommission) >= 0.01) return false;
+
+                // Check overrides
+                for (const agentId in expected.overrides) {
+                    const exp = expected.overrides[agentId].amount;
+                    const act = actual.overrides[agentId] || 0;
+                    if (Math.abs(act - exp) >= 0.01) return false;
+                }
+
+                // Check for unexpected overrides
+                for (const agentId in actual.overrides) {
+                    if (!(agentId in expected.overrides)) return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Get expected values for Examples 11, 12, and 13 (indices 10, 11, 12)
+        function getExpectedValues(exampleIndex) {
+            return exampleIndex === 10 ? {
+                // Index 10: TL Override: Mixed 85%/90% Team
+                'REN1': { hqRoyalty: 5000, personal: 85000, overrides: { 'TL1': { type: 'GAP G1', rate: 0.02, amount: 2000 } }, totalOverrides: 2000, cdCommission: 8000 },
+                'REN2': { hqRoyalty: 5000, personal: 90000, overrides: { 'REN1': { type: 'REDUCED', rate: 0.004, amount: 400 }, 'TL1': { type: 'GAP G2', rate: 0.003, amount: 300 } }, totalOverrides: 700, cdCommission: 4300 },
+                'REN3': { hqRoyalty: 5000, personal: 85000, overrides: { 'REN2': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN1': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'TL1': { type: 'GAP G3', rate: 0.01, amount: 1000 } }, totalOverrides: 4000, cdCommission: 6000 },
+                'REN4': { hqRoyalty: 5000, personal: 90000, overrides: { 'REN3': { type: 'REDUCED', rate: 0.004, amount: 400 }, 'REN2': { type: 'REDUCED', rate: 0.003, amount: 300 }, 'REN1': { type: 'REDUCED', rate: 0.002, amount: 200 }, 'TL1': { type: 'GAP G4', rate: 0.001, amount: 100 } }, totalOverrides: 1000, cdCommission: 4000 },
+                'REN5': { hqRoyalty: 5000, personal: 85000, overrides: { 'REN4': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN3': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN2': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN1': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 5000, cdCommission: 5000 }
+            } : exampleIndex === 11 ? {
+                // Index 11: Generation Pause
+                'REN1': { hqRoyalty: 5000, personal: 85000, overrides: { 'TL1': { type: 'GAP G1', rate: 0.02, amount: 2000 } }, totalOverrides: 2000, cdCommission: 8000 },
+                'REN2': { hqRoyalty: 5000, personal: 90000, overrides: { 'REN1': { type: 'REDUCED', rate: 0.004, amount: 400 }, 'TL1': { type: 'GAP G2', rate: 0.003, amount: 300 } }, totalOverrides: 700, cdCommission: 4300 },
+                'SELLER': { hqRoyalty: 5000, personal: 60000, overrides: { 'TL1': { type: 'GAP', rate: 0.16, amount: 16000 }, 'REN2': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN1': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 19000, cdCommission: 16000 },
+                'REN4': { hqRoyalty: 5000, personal: 85000, overrides: { 'SELLER': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN2': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN1': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'TL1': { type: 'GAP G3', rate: 0.01, amount: 1000 } }, totalOverrides: 5000, cdCommission: 5000 },
+                'REN5': { hqRoyalty: 5000, personal: 90000, overrides: { 'TL1': { type: 'GAP G4', rate: 0.001, amount: 100 }, 'REN4': { type: 'REDUCED', rate: 0.004, amount: 400 }, 'SELLER': { type: 'REDUCED', rate: 0.003, amount: 300 }, 'REN2': { type: 'REDUCED', rate: 0.002, amount: 200 }, 'REN1': { type: 'REDUCED', rate: 0.001, amount: 100 } }, totalOverrides: 1100, cdCommission: 3900 },
+                'REN6': { hqRoyalty: 5000, personal: 85000, overrides: { 'REN5': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN4': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'SELLER': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN2': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 5000, cdCommission: 5000 }
+            } : exampleIndex === 12 ? {
+                // Index 12: Comprehensive GAP Test
+                'REN60_1': { hqRoyalty: 5000, personal: 60000, overrides: { 'TL1': { type: 'GAP', rate: 0.16, amount: 16000 } }, totalOverrides: 16000, cdCommission: 19000 },
+                'REN65': { hqRoyalty: 5000, personal: 65000, overrides: { 'TL1': { type: 'GAP', rate: 0.13, amount: 13000 }, 'REN60_1': { type: 'STANDARD', rate: 0.02, amount: 2000 } }, totalOverrides: 15000, cdCommission: 15000 },
+                'REN70': { hqRoyalty: 5000, personal: 70000, overrides: { 'TL1': { type: 'GAP', rate: 0.11, amount: 11000 }, 'REN65': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN60_1': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 14000, cdCommission: 11000 },
+                'REN75': { hqRoyalty: 5000, personal: 75000, overrides: { 'TL1': { type: 'GAP', rate: 0.08, amount: 8000 }, 'REN70': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN65': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN60_1': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 12000, cdCommission: 8000 },
+                'REN80': { hqRoyalty: 5000, personal: 80000, overrides: { 'TL1': { type: 'GAP', rate: 0.04, amount: 4000 }, 'REN75': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN70': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN65': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN60_1': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 9000, cdCommission: 6000 },
+                'REN85': { hqRoyalty: 5000, personal: 85000, overrides: { 'TL1': { type: 'GAP G1', rate: 0.02, amount: 2000 }, 'REN80': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN75': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN70': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN65': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 7000, cdCommission: 3000 },
+                'REN90': { hqRoyalty: 5000, personal: 90000, overrides: { 'TL1': { type: 'GAP G2', rate: 0.003, amount: 300 }, 'REN85': { type: 'REDUCED', rate: 0.004, amount: 400 }, 'REN80': { type: 'REDUCED', rate: 0.003, amount: 300 }, 'REN75': { type: 'REDUCED', rate: 0.002, amount: 200 }, 'REN70': { type: 'REDUCED', rate: 0.001, amount: 100 } }, totalOverrides: 1300, cdCommission: 3700 },
+                'REN60_2': { hqRoyalty: 5000, personal: 60000, overrides: { 'TL1': { type: 'GAP', rate: 0.16, amount: 16000 }, 'REN90': { type: 'STANDARD', rate: 0.02, amount: 2000 }, 'REN85': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN80': { type: 'STANDARD', rate: 0.01, amount: 1000 }, 'REN75': { type: 'STANDARD', rate: 0.01, amount: 1000 } }, totalOverrides: 21000, cdCommission: 14000 }
+            } : {};
+        }
+
+        // Generate comprehensive test results for Examples 14 and 15
+        function generateCompleteTestResults(exampleIndex, scenarioData) {
+            const expectedValues = getExpectedValues(exampleIndex);
+
+            let html = '<div style="background: #f0f4ff; border: 3px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 10px;">';
+            html += '<h2 style="color: #667eea; margin: 0 0 15px 0;">📊 Complete Test Results - All Sales Scenarios</h2>';
+
+            let allPassed = true;
+            const results = [];
+
+            // Check each sale
+            scenarioData.salesResults.forEach(saleResult => {
+                const sellerId = saleResult.salesperson.id;
+                const expected = expectedValues[sellerId];
+                if (!expected) return; // Skip if no expected values defined
+
+                const actual = {
+                    hqRoyalty: saleResult.hqRoyaltyData.total,
+                    personal: saleResult.result.personalCommission,
+                    overrides: {},
+                    totalOverrides: saleResult.result.totalOverrides,
+                    cdCommission: saleResult.result.cdCommission
+                };
+
+                // Map actual overrides by agent ID (store full override object)
+                saleResult.result.overrides.forEach(o => {
+                    if (o.amount > 0) {
+                        actual.overrides[o.upline.id] = {
+                            type: o.type,
+                            rate: o.rate,
+                            amount: o.amount
+                        };
+                    }
+                });
+
+                // Compare
+                const matches = {
+                    hqRoyalty: Math.abs(actual.hqRoyalty - expected.hqRoyalty) < 0.01,
+                    personal: Math.abs(actual.personal - expected.personal) < 0.01,
+                    totalOverrides: Math.abs(actual.totalOverrides - expected.totalOverrides) < 0.01,
+                    cdCommission: Math.abs(actual.cdCommission - expected.cdCommission) < 0.01,
+                    overrides: true
+                };
+
+                // Check each expected override
+                for (const agentId in expected.overrides) {
+                    const exp = expected.overrides[agentId].amount;
+                    const act = actual.overrides[agentId] ? actual.overrides[agentId].amount : 0;
+                    if (Math.abs(act - exp) >= 0.01) {
+                        matches.overrides = false;
+                        allPassed = false;
+                    }
+                }
+
+                // Check for unexpected overrides
+                for (const agentId in actual.overrides) {
+                    if (!(agentId in expected.overrides)) {
+                        matches.overrides = false;
+                        allPassed = false;
+                    }
+                }
+
+                const salePassed = matches.hqRoyalty && matches.personal && matches.totalOverrides && matches.cdCommission && matches.overrides;
+                if (!salePassed) allPassed = false;
+
+                results.push({
+                    salesperson: saleResult.salesperson,
+                    expected,
+                    actual,
+                    matches,
+                    salePassed
+                });
+            });
+
+            // Overall status
+            html += `<div style="background: ${allPassed ? '#d4edda' : '#f8d7da'}; border: 2px solid ${allPassed ? '#28a745' : '#dc3545'}; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;">`;
+            html += `<h3 style="margin: 0; color: ${allPassed ? '#155724' : '#721c24'}; font-size: 24px;">`;
+            html += allPassed ? '✅ ALL TESTS PASSED' : '❌ TESTS FAILED - See details below';
+            html += '</h3></div>';
+
+            // Individual sale results
+            results.forEach(result => {
+                const borderColor = result.salePassed ? '#28a745' : '#dc3545';
+                const bgColor = result.salePassed ? '#d4edda' : '#f8d7da';
+                const statusIcon = result.salePassed ? '✅' : '❌';
+
+                html += `<div style="background: white; border: 2px solid ${borderColor}; padding: 15px; margin: 15px 0; border-radius: 8px;">`;
+                html += `<h3 style="color: ${borderColor}; margin: 0 0 10px 0;">${statusIcon} Sale by ${result.salesperson.name} (${(result.salesperson.getCommissionTier() * 100).toFixed(0)}% tier)</h3>`;
+
+                html += '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">';
+                html += '<thead><tr style="background: #f8f9fa;">';
+                html += '<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">Item</th>';
+                html += '<th style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">Expected</th>';
+                html += '<th style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">Actual</th>';
+                html += '<th style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">Status</th>';
+                html += '</tr></thead><tbody>';
+
+                // HQ Royalty
+                html += '<tr>';
+                html += '<td style="padding: 8px; border: 1px solid #dee2e6;"><strong>HQ Royalty (5%)</strong></td>';
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.expected.hqRoyalty.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.actual.hqRoyalty.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${result.matches.hqRoyalty ? '✓' : '✗'}</td>`;
+                html += '</tr>';
+
+                // Personal Commission
+                html += '<tr>';
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Personal Commission (${(result.salesperson.getCommissionTier() * 100).toFixed(0)}%)</strong></td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.expected.personal.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.actual.personal.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${result.matches.personal ? '✓' : '✗'}</td>`;
+                html += '</tr>';
+
+                // Overrides by agent
+                const allAgentIds = new Set([...Object.keys(result.expected.overrides), ...Object.keys(result.actual.overrides)]);
+                allAgentIds.forEach(agentId => {
+                    const expectedData = result.expected.overrides[agentId];
+                    const actualData = result.actual.overrides[agentId];
+
+                    const expectedAmt = expectedData ? expectedData.amount : 0;
+                    const actualAmt = actualData ? actualData.amount : 0;
+                    const match = Math.abs(actualAmt - expectedAmt) < 0.01;
+
+                    const uplineAgent = scenarioData.testAgents.find(a => a.id === agentId);
+                    const agentName = uplineAgent ? uplineAgent.name : agentId;
+
+                    // Format expected display with type and rate
+                    let expectedDisplay = '';
+                    if (expectedData) {
+                        const ratePercent = (expectedData.rate * 100).toFixed(1).replace('.0', '');
+                        expectedDisplay = `${expectedData.type} ${ratePercent}% - RM ${expectedAmt.toLocaleString()}`;
+                    } else {
+                        expectedDisplay = 'RM 0';
+                    }
+
+                    // Format actual display with type and rate
+                    let actualDisplay = '';
+                    if (actualData) {
+                        const ratePercent = (actualData.rate * 100).toFixed(1).replace('.0', '');
+                        actualDisplay = `${actualData.type} ${ratePercent}% - RM ${actualAmt.toLocaleString()}`;
+                    } else {
+                        actualDisplay = 'RM 0';
+                    }
+
+                    html += '<tr>';
+                    html += `<td style="padding: 8px; border: 1px solid #dee2e6;">Override to ${agentName}</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">${expectedDisplay}</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">${actualDisplay}</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${match ? '✓' : '✗'}</td>`;
+                    html += '</tr>';
+                });
+
+                // Total Overrides
+                html += '<tr style="background: #f8f9fa; font-weight: bold;">';
+                html += '<td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Total Overrides</strong></td>';
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.expected.totalOverrides.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.actual.totalOverrides.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${result.matches.totalOverrides ? '✓' : '✗'}</td>`;
+                html += '</tr>';
+
+                // CD Commission
+                html += '<tr>';
+                html += '<td style="padding: 8px; border: 1px solid #dee2e6;"><strong>CD Commission</strong></td>';
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.expected.cdCommission.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">RM ${result.actual.cdCommission.toLocaleString()}</td>`;
+                html += `<td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${result.matches.cdCommission ? '✓' : '✗'}</td>`;
+                html += '</tr>';
+
+                html += '</tbody></table>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function calculateCommissionForAgent(agent, totalCommission, hqRoyalty) {
+            const tierRate = agent.getCommissionTier();
+            const personalCommission = totalCommission * tierRate;
+
+            const uplines = agent.getUplineChain();
+            const overrides = [];
+            let totalOverrides = 0;
+
+            let overrideStructure = 'STANDARD';
+            if (tierRate === 0.90 || tierRate === 0.95) {
+                overrideStructure = 'REDUCED';
+            } else if (tierRate < 0.85) {
+                overrideStructure = 'GAP';
+            }
+
+            if (agent.rank !== 'CD') {
+                let gapApplied = false; // Track if GAP has been given to any upline
+
+                uplines.forEach((upline, index) => {
+                    // CRITICAL: Skip CD rank - CD ONLY gets remainder, never percentage overrides
+                    if (upline.rank === 'CD') {
+                        return;
+                    }
+
+                    const gen = index + 1;
+                    let overrideAmount = 0;
+                    let overrideType = '';
+                    let overrideRate = 0;
+                    let isUnlocked = true; // Default to unlocked, will be set properly below
+
+                    // NO generation pause for STANDARD/REDUCED - strict 4-gen cap based on physical generations
+                    // Generation pause ONLY applies to GAP commission (unlimited generations to nearest TL)
+                    const effectiveGen = gen;
+
+                    // CRITICAL: TL always gets GAP commission (for all seller tiers)
+                    if (upline.rank === 'TL' && !gapApplied) {
+                        if (tierRate < 0.85) {
+                            // Mode 1: Seller tier 60-80% - Traditional GAP rates
+                            const gapRates = { 0.60: 0.16, 0.65: 0.13, 0.70: 0.11, 0.75: 0.08, 0.80: 0.04 };
+                            overrideRate = gapRates[tierRate] || 0;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'GAP';
+                        } else {
+                            // Mode 2: Seller tier 85-90% - Count only 85-90% agents as generations
+                            // Generation pause: skip < 85% agents when counting for TL's rate
+                            const agents85Plus = uplines.filter(u => u.getCommissionTier() >= 0.85);
+                            const tlIndexIn85Plus = agents85Plus.indexOf(upline);
+                            const effectiveGenForTL = tlIndexIn85Plus + 1;
+
+                            if (effectiveGenForTL <= 4) {
+                                // TL always uses GAP type, but rate follows STANDARD/REDUCED structure
+                                if (tierRate === 0.85) {
+                                    // 85% seller: GAP rate follows STANDARD structure (2-1-1-1%)
+                                    overrideRate = effectiveGenForTL === 1 ? 0.02 : 0.01;
+                                } else if (tierRate === 0.90 || tierRate === 0.95) {
+                                    // 90%+ seller: GAP rate follows REDUCED structure (0.4-0.3-0.2-0.1%)
+                                    const reducedRates = [0.004, 0.003, 0.002, 0.001];
+                                    overrideRate = reducedRates[effectiveGenForTL - 1] || 0;
+                                }
+                                overrideAmount = totalCommission * overrideRate;
+                                overrideType = 'GAP G' + effectiveGenForTL; // Show generation for 85-90% sellers
+                            } else {
+                                // TL is beyond 4 generations of 85-90% agents - locked
+                                overrideRate = 0;
+                                overrideAmount = 0;
+                                overrideType = 'NOT UNLOCKED';
+                            }
+                        }
+                        gapApplied = true; // Mark GAP as used to prevent double counting
+                    } else if (overrideStructure === 'GAP') {
+                        // Non-TL uplines when seller is 60-80%: use STANDARD rates
+                        const maxUnlockedGen = Math.min(upline.directRecruits, 4);
+                        const isUnlocked = upline.directRecruits >= 1 && effectiveGen <= maxUnlockedGen;
+
+                        if (!isUnlocked) {
+                            overrideType = 'NOT UNLOCKED';
+                            overrideRate = 0;
+                        } else if (gen === 1) {
+                            overrideRate = 0.02;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'STANDARD';
+                        } else {
+                            overrideRate = 0.01;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'STANDARD';
+                        }
+                    } else {
+                        // For non-GAP commissions, check unlock status
+                        const maxUnlockedGen = Math.min(upline.directRecruits, 4);
+                        const isUnlocked = upline.directRecruits >= 1 && effectiveGen <= maxUnlockedGen;
+
+                        if (!isUnlocked) {
+                            overrideType = 'NOT UNLOCKED';
+                            overrideRate = 0;
+                        } else if (overrideStructure === 'REDUCED') {
+                            // When seller is 90% tier, ALL uplines get reduced override structure
+                            const rates = [0.004, 0.003, 0.002, 0.001];
+                            overrideRate = rates[effectiveGen - 1] || 0;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'REDUCED';
+                        } else if (gen === 1) {
+                            // Gen1 gets standard 2%
+                            overrideRate = 0.02;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'STANDARD';
+                        } else {
+                            // Gen2, Gen3, Gen4 all get standard 1%
+                            overrideRate = 0.01;
+                            overrideAmount = totalCommission * overrideRate;
+                            overrideType = 'STANDARD';
+                        }
+                    }
+
+                    totalOverrides += overrideAmount;
+                    overrides.push({
+                        generation: gen,
+                        upline: upline,
+                        rate: overrideRate,
+                        amount: overrideAmount,
+                        type: overrideType,
+                        isUnlocked
+                    });
+                });
+            }
+
+            const cdCommission = totalCommission - hqRoyalty - personalCommission - totalOverrides;
+
+            return {
+                tierRate,
+                personalCommission,
+                hqRoyalty,
+                overrideStructure,
+                overrides,
+                totalOverrides,
+                cdCommission
+            };
+        }
+
+        // ===== BUILD TREE HTML =====
+        function buildTreeHTML(agent, scenarioIndex) {
+            if (!agent) return '';
+
+            const tierRate = (agent.getCommissionTier() * 100).toFixed(0);
+
+            let html = '<ul><li>';
+            html += `<div class="tree-node ${agent.rank.toLowerCase()}"
+                     onmouseenter="showAgentTooltip(event, '${agent.id}', ${scenarioIndex})"
+                     onmouseleave="hideAgentTooltip()">`;
+            html += `<div class="node-name">${agent.name}</div>`;
+            html += `<div class="node-type">${agent.type} - ${agent.rank}</div>`;
+            html += `<div class="node-tier">${tierRate}%</div>`;
+            html += `<div class="node-details">`;
+            html += `Lifetime: RM ${agent.lifetimeCommission.toLocaleString()}<br>`;
+            html += `Current Year: RM ${agent.currentYearSales.toLocaleString()}<br>`;
+            html += `Direct Recruits: ${agent.directRecruits}`;
+            html += `</div>`;
+            if (agent.commissionInput > 0) {
+                html += `<div class="node-commission">Commission: RM ${agent.commissionInput.toLocaleString()}</div>`;
+            }
+            html += `</div>`;
+
+            if (agent.children.length > 0) {
+                html += '<ul>';
+                agent.children.forEach(child => {
+                    html += buildTreeHTML(child, scenarioIndex).replace('<ul>', '').replace('</ul>', '');
+                });
+                html += '</ul>';
+            }
+
+            html += '</li></ul>';
+            return html;
+        }
+
+        // ===== TEST SCENARIOS =====
+        const scenarios = [
+            {
+                name: "Simple Sale - New REN Agent (60% tier)",
+                setupAgents: () => {
+                    testAgents = [];
+                    const agent = new Agent('A1', 'New Agent', 'REN', 'AGENT', null);
+                    agent.lifetimeCommission = 0;
+                    agent.currentYearSales = 0;
+                    agent.directRecruits = 0;
+                    agent.commissionInput = 10000;
+                    testAgents.push(agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 500, // 5%
+                    personalCommission: 6000, // 60%
+                    totalOverrides: 0, // 0%
+                    cdCommission: 3500 // 35% - CD gets all remaining
+                }
+            },
+            {
+                name: "REA with Reduced Override",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 1;
+
+                    const tl = new Agent('TL1', 'TL Upline', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000;
+                    tl.directRecruits = 2;
+                    cd.children.push(tl);
+
+                    const agent = new Agent('A1', 'REA Agent', 'REA', 'AGENT', 'TL1');
+                    agent.lifetimeCommission = 50000;
+                    agent.commissionInput = 20000;
+                    tl.children.push(agent);
+
+                    testAgents.push(cd, tl, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 1000, // 5%
+                    personalCommission: 18000, // 90%
+                    totalOverrides: 80, // 0.4%
+                    cdCommission: 920 // 4.6% - CD gets all remaining
+                }
+            },
+            {
+                name: "65% Tier - 13% Gap Override",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 1;
+
+                    const tl = new Agent('TL1', 'TL Upline', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000;
+                    tl.directRecruits = 2;
+                    cd.children.push(tl);
+
+                    const agent = new Agent('A1', '65% REN', 'REN', 'AGENT', 'TL1');
+                    agent.lifetimeCommission = 25000; // 65% tier
+                    agent.commissionInput = 40000;
+                    tl.children.push(agent);
+
+                    testAgents.push(cd, tl, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 2000, // 5%
+                    personalCommission: 26000, // 65%
+                    totalOverrides: 5200, // 13% gap
+                    cdCommission: 6800 // 17% - CD gets all remaining
+                }
+            },
+            {
+                name: "Progressive HQ Royalty Across Brackets",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 1;
+
+                    const tl = new Agent('TL1', 'TL Upline', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000;
+                    tl.directRecruits = 1;
+                    cd.children.push(tl);
+
+                    const agent = new Agent('A1', '75% REN', 'REN', 'AGENT', 'TL1');
+                    agent.lifetimeCommission = 100000;
+                    agent.commissionInput = 300000;
+                    tl.children.push(agent);
+
+                    testAgents.push(cd, tl, agent);
+                    return agent;
+                },
+                branchYTD: 2900000,
+                expected: {
+                    hqRoyalty: 13000, // 4.33% (100k @ 5% + 200k @ 4%)
+                    personalCommission: 225000, // 75%
+                    totalOverrides: 24000, // 8% (75% tier = 8% GAP)
+                    cdCommission: 38000 // 12.67% - CD gets all remaining
+                }
+            },
+            {
+                name: "Multi-Generation Overrides",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5;
+
+                    const gen3 = new Agent('G3', 'Gen3 TL', 'REN', 'TL', 'CD1');
+                    gen3.lifetimeCommission = 300000;
+                    gen3.directRecruits = 5;
+                    cd.children.push(gen3);
+
+                    const gen2 = new Agent('G2', 'Gen2 TL', 'REN', 'TL', 'G3');
+                    gen2.lifetimeCommission = 300000;
+                    gen2.directRecruits = 3;
+                    gen3.children.push(gen2);
+
+                    const gen1 = new Agent('G1', 'Gen1 TL', 'REN', 'TL', 'G2');
+                    gen1.lifetimeCommission = 300000;
+                    gen1.directRecruits = 4;
+                    gen2.children.push(gen1);
+
+                    const agent = new Agent('A1', '70% REN', 'REN', 'AGENT', 'G1');
+                    agent.lifetimeCommission = 50000;
+                    agent.commissionInput = 100000;
+                    gen1.children.push(agent);
+
+                    testAgents.push(cd, gen3, gen2, gen1, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 5000,
+                    personalCommission: 70000,
+                    totalOverrides: 13000,
+                    cdCommission: 12000
+                }
+            },
+            {
+                name: "CD-TL-REN-TL Hierarchy",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5; // Unlocks Gen1-4
+
+                    // Gen4 from seller - TL under CD
+                    const tl1 = new Agent('TL1', 'Senior TL', 'REN', 'TL', 'CD1');
+                    tl1.lifetimeCommission = 300000; // 90% tier
+                    tl1.directRecruits = 5; // Unlocks Gen1-4
+                    cd.children.push(tl1);
+
+                    // Gen3 from seller - REN agent with recruits
+                    const ren1 = new Agent('REN1', 'Mid REN', 'REN', 'AGENT', 'TL1');
+                    ren1.lifetimeCommission = 150000; // 80% tier
+                    ren1.directRecruits = 5; // Unlocks Gen1-4
+                    tl1.children.push(ren1);
+
+                    // Gen2 from seller - TL under REN agent (SELLER)
+                    const tl2 = new Agent('TL2', 'Junior TL', 'REN', 'TL', 'REN1');
+                    tl2.lifetimeCommission = 200000; // 80% tier (200k is start of 80% bracket)
+                    tl2.directRecruits = 5; // Unlocks Gen1-4
+                    tl2.commissionInput = 60000;
+                    ren1.children.push(tl2);
+
+                    // Gen1 from seller - Another TL
+                    // const tl3 = new Agent('TL3', 'Gen1 TL', 'REN', 'TL', 'TL2');
+                    // tl3.lifetimeCommission = 250000; // 85% tier
+                    // tl3.directRecruits = 5; // Unlocks Gen1-4
+                    // tl2.children.push(tl3);
+
+                    // // Seller - REN agent with 75% tier (triggers gap)
+                    // const agent = new Agent('REN2', 'Selling REN', 'REN', 'AGENT', 'TL3');
+                    // agent.lifetimeCommission = 100000; // 75% tier
+                    // agent.commissionInput = 60000;
+                    // tl2.children.push(agent);
+
+                    testAgents.push(cd, tl1, ren1, tl2);
+                    return tl2;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 3000, // 5%
+                    personalCommission: 48000, // 80%
+                    totalOverrides: 3600, // 6% (2% Mid REN + 4% GAP Senior TL) - CD gets remainder, not override
+                    cdCommission: 5400 // 9% - CD gets all remaining
+                }
+            },
+            {
+                name: "CD Direct Sale (95% Tier, No Overrides)",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.commissionInput = 200000;
+
+                    testAgents.push(cd);
+                    return cd;
+                },
+                branchYTD: 5000000,
+                expected: {
+                    hqRoyalty: 8000, // 4%
+                    personalCommission: 190000, // 95%
+                    totalOverrides: 0, // 0%
+                    cdCommission: 2000 // 1% - CD gets all remaining
+                }
+            },
+            {
+                name: "Gap Structure but CD Gen1 (CD Gets Commission Only)",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 2;
+
+                    const agent = new Agent('A1', '60% REN', 'REN', 'AGENT', 'CD1');
+                    agent.lifetimeCommission = 0;
+                    agent.commissionInput = 30000;
+                    cd.children.push(agent);
+
+                    testAgents.push(cd, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 1500, // 5%
+                    personalCommission: 18000, // 60%
+                    totalOverrides: 0, // 0% - CD gets remainder only, never percentage override
+                    cdCommission: 10500 // 35% - CD gets all remaining
+                }
+            },
+            {
+                name: "REN with RM 1M Current Year Sales (90% Tier, Reduced)",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 1;
+
+                    const tl = new Agent('TL1', 'TL Upline', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000;
+                    tl.directRecruits = 2;
+                    cd.children.push(tl);
+
+                    const agent = new Agent('A1', '90% REN (1M)', 'REN', 'AGENT', 'TL1');
+                    agent.lifetimeCommission = 0;
+                    agent.currentYearSales = 1000000; // Triggers 90% tier
+                    agent.commissionInput = 50000;
+                    tl.children.push(agent);
+
+                    testAgents.push(cd, tl, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 2500, // 5%
+                    personalCommission: 45000, // 90%
+                    totalOverrides: 200, // 0.4% reduced
+                    cdCommission: 2300 // 4.6% - CD gets all remaining
+                }
+            },
+            {
+                name: "REN TL with TL Below - Multi-Generation Overrides",
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5; // Changed to 5 - unlocks Gen1-4
+
+                    // REN-type TL (Gen2 to seller)
+                    const tlREN = new Agent('TL1', 'REN Team Leader', 'REN', 'TL', 'CD1');
+                    tlREN.lifetimeCommission = 280000; // 90% tier
+                    tlREN.directRecruits = 3; // Unlocks Gen1-2
+                    cd.children.push(tlREN);
+
+                    // Another TL below the REN TL (Gen1 to seller)
+                    const tlGen1 = new Agent('TL2', 'Gen1 TL', 'REN', 'TL', 'TL1');
+                    tlGen1.lifetimeCommission = 300000; // 90% tier
+                    tlGen1.directRecruits = 4; // Unlocks Gen1-3
+                    tlREN.children.push(tlGen1);
+
+                    // Selling agent with 70% tier (triggers gap)
+                    const agent = new Agent('A1', 'Junior Agent', 'REN', 'AGENT', 'TL2');
+                    agent.lifetimeCommission = 50000; // 70% tier
+                    agent.commissionInput = 80000;
+                    tlGen1.children.push(agent);
+
+                    testAgents.push(cd, tlREN, tlGen1, agent);
+                    return agent;
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 4000, // 5%
+                    personalCommission: 56000, // 70%
+                    totalOverrides: 9600, // 12% (11% gap + 1%) - CD gets remainder, not override
+                    cdCommission: 10400 // 13% - CD gets all remaining
+                }
+            },
+            {
+                name: "TL Override: Mixed 85%/90% Team (4 Gen Cap)",
+                remarks: `
+                    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="color: #1976d2; margin-bottom: 10px;">📘 Hierarchy: TL → 85% REN (Gen1) → 90% REN (Gen2) → 85% REN (Gen3) → 90% REN (Gen4) → 85% REN (Gen5)</h4>
+                        <p style="margin-bottom: 10px;"><strong>Testing ALL agents making RM 100,000 sales - REN rank always uses STANDARD rates (2-1-1-1)</strong></p>
+
+                        <h3 style="color: #1976d2; margin: 15px 0 10px 0;">📊 Expected Commission Breakdown (All Sales Scenarios)</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 10px 0; background: white; font-size: 13px;">
+                            <thead>
+                                <tr style="background: #2196f3; color: white;">
+                                    <th style="padding: 8px; border: 1px solid #1976d2;">Seller</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">HQ 5%</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">Personal</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">TL</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">85% G1</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">90% G2</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">85% G3</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">90% G4</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">85% G5</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">Total Override</th>
+                                    <th style="padding: 8px; border: 1px solid #1976d2; text-align: center;">CD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd;"><strong>85% Gen1</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; background: #ffeb3b;">SELLER</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; font-weight: bold;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>10k</strong></td>
+                                </tr>
+                                <tr style="background: #e1f5fe;">
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd;"><strong>90% Gen2</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>90k</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; background: #ffeb3b;">SELLER</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; font-weight: bold; color: #28a745;">2k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>3k</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd;"><strong>85% Gen3</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; background: #ffeb3b;">SELLER</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; font-weight: bold; color: #28a745;">3k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>7k</strong></td>
+                                </tr>
+                                <tr style="background: #e1f5fe;">
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd;"><strong>90% Gen4</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>90k</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; background: #ffeb3b;">SELLER</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">-</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; font-weight: bold; color: #28a745;">4k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>1k</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd;"><strong>85% Gen5</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;">0</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; background: #ffeb3b;">SELLER</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center; font-weight: bold; color: #28a745;">5k</td>
+                                    <td style="padding: 8px; border: 1px solid #e3f2fd; text-align: center;"><strong>5k</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 5px; border: 2px solid #ff9800;">
+                            <strong style="color: #f57c00;">⚠️ CRITICAL: REN Rank Always Uses STANDARD Rates!</strong>
+                            <ul style="margin: 5px 0 0 20px;">
+                                <li><strong>ALL REN agents:</strong> Use standard rates (2% Gen1, 1% Gen2-4) regardless of tier (85% or 90%)</li>
+                                <li><strong>TL rank only:</strong> Can use reduced rates when at 90% tier</li>
+                                <li><strong>4 Gen Cap:</strong> Only first 4 generations from TL receive overrides</li>
+                                <li><strong>TL gets 0:</strong> TL is beyond 4 gen cap from all sellers</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5;
+
+                    // TL at top
+                    const tl = new Agent('TL1', 'Team Leader', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000; // 85% tier
+                    tl.directRecruits = 5;
+                    cd.children.push(tl);
+
+                    // Gen1 from TL: 85% REN
+                    const ren1 = new Agent('REN1', '85% REN (Gen1 from TL)', 'REN', 'AGENT', 'TL1');
+                    ren1.lifetimeCommission = 300000; // 85% tier
+                    ren1.directRecruits = 5;
+                    tl.children.push(ren1);
+
+                    // Gen2 from TL: 90% REN
+                    const ren2 = new Agent('REN2', '90% REN (Gen2 from TL)', 'REN', 'AGENT', 'REN1');
+                    ren2.lifetimeCommission = 300000;
+                    ren2.currentYearSales = 1000000; // 90% tier
+                    ren2.directRecruits = 5;
+                    ren1.children.push(ren2);
+
+                    // Gen3 from TL: 85% REN
+                    const ren3 = new Agent('REN3', '85% REN (Gen3 from TL)', 'REN', 'AGENT', 'REN2');
+                    ren3.lifetimeCommission = 300000; // 85% tier
+                    ren3.directRecruits = 5;
+                    ren2.children.push(ren3);
+
+                    // Gen4 from TL: 90% REN
+                    const ren4 = new Agent('REN4', '90% REN (Gen4 from TL)', 'REN', 'AGENT', 'REN3');
+                    ren4.lifetimeCommission = 300000;
+                    ren4.currentYearSales = 1000000; // 90% tier
+                    ren4.directRecruits = 5;
+                    ren4.commissionInput = 100000; // TEST: Gen4 makes sale
+                    ren3.children.push(ren4);
+
+                    // Gen5 from TL: 85% REN
+                    const ren5 = new Agent('REN5', '85% REN (Gen5 from TL)', 'REN', 'AGENT', 'REN4');
+                    ren5.lifetimeCommission = 300000; // 85% tier
+                    ren5.directRecruits = 5;
+                    // ren5.commissionInput = 100000; // Uncomment to test Gen5 sale
+                    ren4.children.push(ren5);
+
+                    // Give ALL agents commissionInput to calculate all scenarios
+                    ren1.commissionInput = 100000;
+                    ren2.commissionInput = 100000;
+                    ren3.commissionInput = 100000;
+                    // ren4 already has it
+                    ren5.commissionInput = 100000;
+
+                    testAgents.push(cd, tl, ren1, ren2, ren3, ren4, ren5);
+                    return ren4; // Currently showing Gen4 as primary seller
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 5000, // 5%
+                    personalCommission: 90000, // 90% (seller at 90% tier)
+                    totalOverrides: 4000, // 4% (2% + 1% + 1%) - REN rank uses STANDARD rates only
+                    cdCommission: 1000 // 1% - CD gets remainder
+                }
+            },
+            {
+                name: "Generation Pause: Non-85%-90% in Chain",
+                remarks: `
+                    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="color: #f57c00; margin-bottom: 10px;">🔄 Hierarchy: TL → 85% REN (G1) → 90% REN (G2) → 60% REN (G3, PAUSE) → 85% REN (G4) → 90% REN (G5) → 85% REN (G6)</h4>
+                        <p style="margin-bottom: 10px;"><strong>Testing ALL agents making RM 100,000 sales - 60% at Gen3 PAUSES generation counting for 85%-90% structure</strong></p>
+
+                        <h3 style="color: #ff6b00; margin: 15px 0 10px 0;">📊 Expected Commission Breakdown (All Sales Scenarios with Generation Pause)</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 10px 0; background: white; font-size: 12px;">
+                            <thead>
+                                <tr style="background: #ff9800; color: white;">
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">Seller</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">HQ 5%</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">Personal</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">TL</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">85% G1</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">90% G2</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">60% G3</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">85% G4</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">90% G5</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">85% G6</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">Total Override</th>
+                                    <th style="padding: 6px; border: 1px solid #f57c00;">CD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>85% G1</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>10k</strong></td>
+                                </tr>
+                                <tr style="background: #e1f5fe;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>90% G2</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>90k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold; color: #28a745;">2k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>3k</strong></td>
+                                </tr>
+                                <tr style="background: #fff3e0; border: 2px solid #ff9800;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>60% G3</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>60k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #d32f2f;">16k GAP</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold; color: #d32f2f;">19k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>16k</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>85% G4</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #888;">0 (pause)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL<br/><span style="font-size: 10px;">(G3 for 85-90)</span></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold; color: #28a745;">3k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>7k</strong></td>
+                                </tr>
+                                <tr style="background: #e1f5fe;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>90% G5</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>90k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #888;">0 (pause)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)<br/><span style="font-size: 10px;">G3 for 85-90</span></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL<br/><span style="font-size: 10px;">(G4 for 85-90)</span></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">-</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold; color: #28a745;">4k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>1k</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2;"><strong>85% G6</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>85k</strong></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;">0</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">2k (2%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #888;">0 (pause)</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)<br/><span style="font-size: 10px;">G3 for 85-90</span></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; color: #28a745;">1k (1%)<br/><span style="font-size: 10px;">G4 for 85-90</span></td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; background: #ffeb3b;">SELL</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center; font-weight: bold; color: #28a745;">5k</td>
+                                    <td style="padding: 6px; border: 1px solid #ffe0b2; text-align: center;"><strong>5k</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px; border: 2px solid #4caf50;">
+                            <strong style="color: #2e7d32;">✅ Generation Pause Concept:</strong>
+                            <ul style="margin: 5px 0 0 20px; line-height: 1.6;">
+                                <li><strong>60% at Gen3 PAUSES</strong> generation counting for 85%-90% structure</li>
+                                <li>When 85% G4 sells: They're counted as <strong>Gen3 for 85%-90%</strong> (60% didn't consume slot)</li>
+                                <li>When 90% G5 sells: They're counted as <strong>Gen4 for 85%-90%</strong> (60% pause continues)</li>
+                                <li>When 60% G3 sells: <strong>Triggers 16% GAP to TL</strong> (seller < 85%)</li>
+                                <li><strong>Result:</strong> Generation pause prevents non-85%-90% from wasting slots</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5;
+
+                    // TL at top
+                    const tl = new Agent('TL1', 'Team Leader', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000; // 85% tier
+                    tl.directRecruits = 5;
+                    cd.children.push(tl);
+
+                    // Gen1 from TL: 85% REN
+                    const ren1 = new Agent('REN1', '85% REN (Gen1 from TL)', 'REN', 'AGENT', 'TL1');
+                    ren1.lifetimeCommission = 300000; // 85% tier
+                    ren1.directRecruits = 5;
+                    tl.children.push(ren1);
+
+                    // Gen2 from TL: 90% REN
+                    const ren2 = new Agent('REN2', '90% REN (Gen2 from TL)', 'REN', 'AGENT', 'REN1');
+                    ren2.lifetimeCommission = 300000;
+                    ren2.currentYearSales = 1000000; // 90% tier
+                    ren2.directRecruits = 5;
+                    ren1.children.push(ren2);
+
+                    // Gen3 from TL: 60% REN (SELLER) - Triggers GAP
+                    const seller = new Agent('SELLER', '60% REN (Gen3 from TL)', 'REN', 'AGENT', 'REN2');
+                    seller.lifetimeCommission = 0; // 60% tier
+                    seller.directRecruits = 3;
+
+                    ren2.children.push(seller);
+
+                    // Gen4 from TL: 85% REN (below seller, shown for illustration)
+                    const ren4 = new Agent('REN4', '85% REN (Gen4 from TL, below seller)', 'REN', 'AGENT', 'SELLER');
+                    ren4.lifetimeCommission = 300000; // 85% tier
+                    ren4.directRecruits = 5;
+                    seller.children.push(ren4);
+
+                    // Gen5 from TL: 90% REN
+                    const ren5 = new Agent('REN5', '90% REN (Gen5 from TL)', 'REN', 'AGENT', 'REN4');
+                    ren5.lifetimeCommission = 300000;
+                    ren5.currentYearSales = 1000000; // 90% tier
+                    ren5.commissionInput = 100000; // TEST: Gen5 makes sale
+                    ren5.directRecruits = 5;
+                    ren4.children.push(ren5);
+
+                    // Gen6 from TL: 85% REN
+                    const ren6 = new Agent('REN6', '85% REN (Gen6 from TL)', 'REN', 'AGENT', 'REN5');
+                    ren6.lifetimeCommission = 300000; // 85% tier
+                    ren6.directRecruits = 5;
+                    // ren6.commissionInput = 100000; // Uncomment to test Gen6 sale
+                    ren5.children.push(ren6);
+
+                    // Give ALL agents commissionInput to calculate all scenarios
+                    ren1.commissionInput = 100000;
+                    ren2.commissionInput = 100000;
+                    seller.commissionInput = 100000; // 60% agent
+                    ren4.commissionInput = 100000;
+                    // ren5 already has it
+                    ren6.commissionInput = 100000;
+
+                    testAgents.push(cd, tl, ren1, ren2, seller, ren4, ren5, ren6);
+                    return ren5; // Currently showing Gen5 as primary seller
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 5000, // 5%
+                    personalCommission: 90000, // 90% (seller at 90% tier - REN5 SELLER)
+                    totalOverrides: 4000, // 4% (2% + 1% + 1%) - 60% agent pauses gen, doesn't consume slot
+                    cdCommission: 1000 // 1% - CD gets remainder
+                }
+            },
+            {
+                name: "Comprehensive GAP Test: All Tier Transitions (60%-90%)",
+                remarks: `
+                    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="color: #1976d2; margin-bottom: 10px;">🧪 Hierarchy: CD → TL → 60% → 65% → 70% → 75% → 80% → 85% → 90% → 60%</h4>
+                        <p style="margin-bottom: 10px;"><strong>Testing ALL tier transitions from 60% to 90% with comprehensive GAP commission calculations</strong></p>
+                        <p style="margin-bottom: 10px;"><strong>This test validates:</strong></p>
+                        <ul style="margin: 5px 0 0 20px; line-height: 1.6;">
+                            <li>GAP commission for 60%, 65%, 70%, 75%, 80% tiers (all below 85%)</li>
+                            <li>STANDARD commission for 85% tier</li>
+                            <li>REDUCED commission for 90% tier</li>
+                            <li>Generation pause logic with multiple low-tier agents</li>
+                        </ul>
+                    </div>
+                `,
+                setupAgents: () => {
+                    testAgents = [];
+                    const cd = new Agent('CD1', 'CD Boss', 'REN', 'CD', null);
+                    cd.lifetimeCommission = 400000;
+                    cd.directRecruits = 5;
+
+                    const tl = new Agent('TL1', 'Team Leader', 'REN', 'TL', 'CD1');
+                    tl.lifetimeCommission = 300000;
+                    tl.directRecruits = 5;
+                    cd.children.push(tl);
+
+                    // Gen1: 60% REN
+                    const ren60_1 = new Agent('REN60_1', '60% REN (Gen1)', 'REN', 'AGENT', 'TL1');
+                    ren60_1.lifetimeCommission = 0;
+                    ren60_1.directRecruits = 5;
+                    ren60_1.commissionInput = 100000;
+                    tl.children.push(ren60_1);
+
+                    // Gen2: 65% REN
+                    const ren65 = new Agent('REN65', '65% REN (Gen2)', 'REN', 'AGENT', 'REN60_1');
+                    ren65.lifetimeCommission = 25000;
+                    ren65.directRecruits = 5;
+                    ren65.commissionInput = 100000;
+                    ren60_1.children.push(ren65);
+
+                    // Gen3: 70% REN
+                    const ren70 = new Agent('REN70', '70% REN (Gen3)', 'REN', 'AGENT', 'REN65');
+                    ren70.lifetimeCommission = 75000;
+                    ren70.directRecruits = 5;
+                    ren70.commissionInput = 100000;
+                    ren65.children.push(ren70);
+
+                    // Gen4: 75% REN
+                    const ren75 = new Agent('REN75', '75% REN (Gen4)', 'REN', 'AGENT', 'REN70');
+                    ren75.lifetimeCommission = 150000;
+                    ren75.directRecruits = 5;
+                    ren75.commissionInput = 100000;
+                    ren70.children.push(ren75);
+
+                    // Gen5: 80% REN
+                    const ren80 = new Agent('REN80', '80% REN (Gen5)', 'REN', 'AGENT', 'REN75');
+                    ren80.lifetimeCommission = 250000;
+                    ren80.directRecruits = 5;
+                    ren80.commissionInput = 100000;
+                    ren75.children.push(ren80);
+
+                    // Gen6: 85% REN
+                    const ren85 = new Agent('REN85', '85% REN (Gen6)', 'REN', 'AGENT', 'REN80');
+                    ren85.lifetimeCommission = 300000;
+                    ren85.directRecruits = 5;
+                    ren85.commissionInput = 100000;
+                    ren80.children.push(ren85);
+
+                    // Gen7: 90% REN
+                    const ren90 = new Agent('REN90', '90% REN (Gen7)', 'REN', 'AGENT', 'REN85');
+                    ren90.lifetimeCommission = 300000;
+                    ren90.currentYearSales = 1000000;
+                    ren90.directRecruits = 5;
+                    ren90.commissionInput = 100000;
+                    ren85.children.push(ren90);
+
+                    // Gen8: 60% REN (at the end, to test generation pause at depth)
+                    const ren60_2 = new Agent('REN60_2', '60% REN (Gen8)', 'REN', 'AGENT', 'REN90');
+                    ren60_2.lifetimeCommission = 0;
+                    ren60_2.directRecruits = 5;
+                    ren60_2.commissionInput = 100000;
+                    ren90.children.push(ren60_2);
+
+                    testAgents.push(cd, tl, ren60_1, ren65, ren70, ren75, ren80, ren85, ren90, ren60_2);
+                    return ren60_1; // Primary seller for display
+                },
+                branchYTD: 0,
+                expected: {
+                    hqRoyalty: 5000,
+                    personalCommission: 60000,
+                    totalOverrides: 16000, // 16% GAP to TL
+                    cdCommission: 19000
+                }
+            },
+
+        ];
+
+        // ===== RENDER TEST SCENARIO =====
+        function renderScenario(scenario, index) {
+            scenario.setupAgents(); // Initialize agents
+            const rootAgent = testAgents.find(a => !a.parentId);
+
+            // Initialize commission data for all agents in THIS scenario
+            allScenariosData[index] = {
+                agents: {},
+                testAgents: [...testAgents], // Store a copy of testAgents for this scenario
+                salesResults: [] // Store individual sale results for each salesperson
+            };
+
+            testAgents.forEach(a => {
+                allScenariosData[index].agents[a.id] = {
+                    agent: a,
+                    personalSales: [],
+                    groupCommissions: [],
+                    totalPersonal: 0,
+                    totalGroup: 0,
+                    cdCommissions: [],
+                    totalCDRemainder: 0
+                };
+            });
+
+            // Find ALL agents with commissionInput (multiple salespersons)
+            const salespersons = testAgents.filter(a => a.commissionInput && a.commissionInput > 0);
+
+            // Calculate commission for EACH salesperson
+            salespersons.forEach(salesperson => {
+                const hqRoyaltyData = calculateMarginalHQRoyalty(scenario.branchYTD, salesperson.commissionInput);
+                const result = calculateCommissionForAgent(salesperson, salesperson.commissionInput, hqRoyaltyData.total);
+
+                // Store the result for this salesperson
+                allScenariosData[index].salesResults.push({
+                    salesperson,
+                    hqRoyaltyData,
+                    result
+                });
+
+                // Store personal sales commission
+                allScenariosData[index].agents[salesperson.id].personalSales.push({
+                    totalCommission: salesperson.commissionInput,
+                    hqRoyalty: hqRoyaltyData.total,
+                    personalCommission: result.personalCommission,
+                    tierRate: result.tierRate
+                });
+                allScenariosData[index].agents[salesperson.id].totalPersonal += result.personalCommission;
+
+                // Store group commissions (overrides uplines receive)
+                result.overrides.forEach(override => {
+                    if (override.amount > 0) {
+                        allScenariosData[index].agents[override.upline.id].groupCommissions.push({
+                            fromAgent: salesperson.name,
+                            fromAgentTier: result.tierRate,
+                            generation: override.generation,
+                            type: override.type,
+                            rate: override.rate,
+                            amount: override.amount,
+                            transactionTotal: salesperson.commissionInput
+                        });
+                        allScenariosData[index].agents[override.upline.id].totalGroup += override.amount;
+                    }
+                });
+
+                // Store CD Commission
+                const cd = testAgents.find(a => a.rank === 'CD');
+                if (cd && result.cdCommission > 0) {
+                    allScenariosData[index].agents[cd.id].cdCommissions.push({
+                        fromAgent: salesperson.name,
+                        fromAgentTier: result.tierRate,
+                        amount: result.cdCommission,
+                        transactionTotal: salesperson.commissionInput
+                    });
+                    allScenariosData[index].agents[cd.id].totalCDRemainder += result.cdCommission;
+                }
+            });
+
+            // For backwards compatibility with existing single-result display, use the first/primary seller
+            // For Example 14 (index 12), use REN5 as primary seller; otherwise use first salesperson
+            let agent;
+            if (index === 12) {
+                // Example 14: Use REN5 (90% REN, Gen5 from TL) as primary seller
+                agent = testAgents.find(a => a.id === 'REN5') || salespersons[0];
+            } else {
+                agent = salespersons[0] || testAgents.find(a => a.commissionInput > 0);
+            }
+            const primarySaleResult = agent ? allScenariosData[index].salesResults.find(sr => sr.salesperson.id === agent.id) : null;
+            const result = primarySaleResult ? primarySaleResult.result : null;
+            const hqRoyaltyData = primarySaleResult ? primarySaleResult.hqRoyaltyData : null;
+
+            const tolerance = 0.01;
+            const matches = result ? {
+                hqRoyalty: Math.abs(result.hqRoyalty - scenario.expected.hqRoyalty) < tolerance,
+                personalCommission: Math.abs(result.personalCommission - scenario.expected.personalCommission) < tolerance,
+                totalOverrides: Math.abs(result.totalOverrides - scenario.expected.totalOverrides) < tolerance,
+                cdCommission: Math.abs(result.cdCommission - scenario.expected.cdCommission) < tolerance
+            } : {};
+
+            // For Examples 11, 12 & 13, use comprehensive test results to determine pass/fail
+            let allMatch = result ? Object.values(matches).every(m => m) : false;
+            if (index === 10 || index === 11 || index === 12) {
+                allMatch = calculateAllTestsPassed(index, allScenariosData[index]);
+            }
+            const statusClass = allMatch ? 'passed' : 'failed';
+            const statusText = allMatch ? '✓ PASSED' : '✗ FAILED';
+
+            let html = `
+                <div class="test-scenario ${statusClass}">
+                    <div class="scenario-header">
+                        <div class="scenario-title">${index + 1}. ${scenario.name}</div>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                    </div>
+
+                    <div class="side-by-side-container">
+                        <div class="hierarchy-column">
+                            <h3 style="color: #667eea; margin: 20px 0;">📊 Hierarchy Structure</h3>
+                            <div class="tree">${buildTreeHTML(rootAgent, index)}</div>
+                        </div>
+
+                        <div class="calculation-column">
+                            <h3 style="color: #667eea; margin: 20px 0;">🧮 Commission Calculations</h3>
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong>Transaction:</strong> RM ${agent.commissionInput.toLocaleString()}<br>
+                            <strong>Branch YTD:</strong> RM ${scenario.branchYTD.toLocaleString()}<br>
+                            <strong>Agent Tier:</strong> ${(result.tierRate * 100).toFixed(0)}%<br>
+                            <strong>Override Structure:</strong> ${result.overrideStructure}
+                        </div>
+            `;
+
+            // HQ Royalty Breakdown
+            if (hqRoyaltyData.breakdown.length > 0) {
+                html += `<div class="hq-royalty-breakdown">
+                    <div style="font-weight: bold; margin-bottom: 8px;">🏢 HQ Royalty Breakdown:</div>`;
+                hqRoyaltyData.breakdown.forEach(b => {
+                    html += `<div class="hq-royalty-item">
+                        <span>${b.bracketName}: RM ${b.amount.toLocaleString()} × ${(b.rate * 100)}%</span>
+                        <span>= RM ${b.royaltyAmount.toLocaleString()}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            // Comparison Grid (skip for Examples 14 & 15 - they use comprehensive test results)
+            if (index !== 11 && index !== 12 && index !== 13) {
+                html += `<div class="comparison-grid">
+                    <div class="comparison-column">
+                        <h4>📋 Expected Results</h4>
+                        <div class="calc-row">
+                            <span class="calc-label">HQ Royalty:</span>
+                            <span class="calc-value">RM ${scenario.expected.hqRoyalty.toLocaleString()}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Personal Commission:</span>
+                            <span class="calc-value">RM ${scenario.expected.personalCommission.toLocaleString()}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Total Overrides:</span>
+                            <span class="calc-value">RM ${scenario.expected.totalOverrides.toLocaleString()}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">CD Commission:</span>
+                            <span class="calc-value">RM ${scenario.expected.cdCommission.toLocaleString()}
+                                <span style="color: #6c757d; font-size: 0.9em;">(${((scenario.expected.cdCommission / agent.commissionInput) * 100).toFixed(2)}%)</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="comparison-column">
+                        <h4>🎯 Actual Results</h4>
+                        <div class="calc-row">
+                            <span class="calc-label">HQ Royalty:</span>
+                            <span class="calc-value ${matches.hqRoyalty ? 'match' : 'mismatch'}">
+                                RM ${result.hqRoyalty.toLocaleString()}
+                            </span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Personal Commission:</span>
+                            <span class="calc-value ${matches.personalCommission ? 'match' : 'mismatch'}">
+                                RM ${result.personalCommission.toLocaleString()}
+                            </span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Total Overrides:</span>
+                            <span class="calc-value ${matches.totalOverrides ? 'match' : 'mismatch'}">
+                                RM ${result.totalOverrides.toLocaleString()}
+                            </span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">CD Commission:</span>
+                            <span class="calc-value ${matches.cdCommission ? 'match' : 'mismatch'}">
+                                RM ${result.cdCommission.toLocaleString()}
+                                <span style="color: #6c757d; font-size: 0.9em;">(${((result.cdCommission / agent.commissionInput) * 100).toFixed(2)}%)</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Comprehensive Test Results for Examples 11, 12 and 13
+            if (index === 10 || index === 11 || index === 12) {
+                html += generateCompleteTestResults(index, allScenariosData[index]);
+            }
+
+            // Override Details (skip for Examples 11, 12 & 13 - they use comprehensive test results)
+            if (result.overrides.length > 0 && index !== 10 && index !== 11 && index !== 12) {
+                html += `<div class="override-detail">
+                    <div class="override-title">📈 Override Breakdown:</div>`;
+                result.overrides.forEach(o => {
+                    html += `<div class="override-item">
+                        <span><strong>Gen${o.generation}:</strong> ${o.upline.name} (${o.upline.rank}, ${o.upline.directRecruits} recruits) - ${o.type}</span>
+                        <span><strong>${(o.rate * 100).toFixed(2)}%</strong> = RM ${o.amount.toLocaleString()}
+                        ${!o.isUnlocked ? '⚠️ LOCKED' : '✓'}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            // Special explanation for scenario 5 (Multi-Generation Overrides) - index 4
+            if (index === 4 && result.overrides.length > 0) {
+                html += `
+                    <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0; border-radius: 8px;">
+                        <h4 style="color: #ff6b00; margin: 0 0 10px 0;">⚠️ IMPORTANT: GAP Commission Rule</h4>
+                        <p style="margin-bottom: 10px;"><strong>Seller at 70% tier triggers GAP structure:</strong></p>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li><strong>Gen1 TL (G1):</strong> 11% GAP = <span style="color: #28a745; font-weight: bold;">RM 11,000</span> ← <strong style="color: #ff6b00;">NEAREST upline TL gets GAP!</strong></li>
+                            <li><strong>Gen2 TL (G2):</strong> 1% STANDARD = <span style="color: #28a745; font-weight: bold;">RM 1,000</span> ← <strong>Other TLs get standard comm only</strong></li>
+                            <li><strong>Gen3 TL (G3):</strong> NOT UNLOCKED (needs 3+ recruits, only has 2)</li>
+                            <li><strong>Gen4 CD:</strong> SKIPPED (CD gets remainder only, never % override)</li>
+                        </ul>
+                        <p style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px;"><strong>Total Overrides:</strong> RM 12,000</p>
+                        <div style="margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 5px; border: 2px solid #d32f2f;">
+                            <strong style="color: #d32f2f;">📌 Key Rule:</strong> GAP commission can <strong>ONLY</strong> be given to the <strong>NEAREST upline TL</strong>. Other TLs receive standard commission only!
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Special explanation for scenario 3 (65% Tier - 13% Gap Override) - index 2
+            if (index === 2 && result.overrides.length > 0) {
+                html += `
+                    <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0; border-radius: 8px;">
+                        <h4 style="color: #ff6b00; margin: 0 0 10px 0;">⚠️ IMPORTANT: GAP Commission Rates (60% - 80% Tiers)</h4>
+                        <p style="margin-bottom: 10px;"><strong>When seller is BELOW 85% tier, the NEAREST upline TL receives GAP commission:</strong></p>
+                        <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                            <thead>
+                                <tr style="background: #ff9800; color: white;">
+                                    <th style="padding: 10px; text-align: left; border: 1px solid #f57c00;">Seller Tier</th>
+                                    <th style="padding: 10px; text-align: center; border: 1px solid #f57c00;">GAP Commission Rate</th>
+                                    <th style="padding: 10px; text-align: left; border: 1px solid #f57c00;">Example (RM 40,000)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;"><strong>60% Tier</strong></td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #ffe0b2; font-weight: bold; color: #d32f2f;">16%</td>
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;">RM 40,000 × 16% = <strong style="color: #28a745;">RM 6,400</strong></td>
+                                </tr>
+                                <tr style="background: white;">
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;"><strong>65% Tier</strong> ← This scenario</td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #ffe0b2; font-weight: bold; color: #d32f2f;">13%</td>
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;">RM 40,000 × 13% = <strong style="color: #28a745;">RM 5,200</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;"><strong>70% Tier</strong></td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #ffe0b2; font-weight: bold; color: #d32f2f;">11%</td>
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;">RM 40,000 × 11% = <strong style="color: #28a745;">RM 4,400</strong></td>
+                                </tr>
+                                <tr style="background: white;">
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;"><strong>75% Tier</strong></td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #ffe0b2; font-weight: bold; color: #d32f2f;">8%</td>
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;">RM 40,000 × 8% = <strong style="color: #28a745;">RM 3,200</strong></td>
+                                </tr>
+                                <tr style="background: #fff8e1;">
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;"><strong>80% Tier</strong></td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #ffe0b2; font-weight: bold; color: #d32f2f;">4%</td>
+                                    <td style="padding: 10px; border: 1px solid #ffe0b2;">RM 40,000 × 4% = <strong style="color: #28a745;">RM 1,600</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 15px; padding: 12px; background: #ffebee; border-radius: 5px; border: 2px solid #d32f2f;">
+                            <strong style="color: #d32f2f;">📌 Key Rules:</strong>
+                            <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                                <li>GAP commission is calculated on <strong>TOTAL commission amount</strong> (not after HQ royalty)</li>
+                                <li>Only the <strong>NEAREST upline TL</strong> receives GAP - no limit on generations</li>
+                                <li>Other uplines (non-TL or beyond nearest TL) receive <strong>standard 2-1-1-1 overrides</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `</div></div></div>`; // Close calculation-column, side-by-side-container, test-scenario
+
+            return { html, passed: allMatch };
+        }
+
+        // ===== RUN ALL TESTS =====
+        function runAllTests() {
+            let passed = 0;
+            let failed = 0;
+            let html = '';
+
+            scenarios.forEach((scenario, index) => {
+                const result = renderScenario(scenario, index);
+                html += result.html;
+                if (result.passed) passed++;
+                else failed++;
+            });
+
+            document.getElementById('scenarios').innerHTML = html;
+            document.getElementById('totalCount').textContent = scenarios.length;
+            document.getElementById('passedCount').textContent = passed;
+            document.getElementById('failedCount').textContent = failed;
+            document.getElementById('summary').style.display = 'block';
+        }
+
+        // ===== TOOLTIP FUNCTIONS =====
+        function showAgentTooltip(event, agentId, scenarioIndex) {
+            if (!allScenariosData[scenarioIndex]) return;
+
+            const scenarioData = allScenariosData[scenarioIndex];
+            const agent = scenarioData.testAgents.find(a => a.id === agentId);
+            if (!agent) return;
+
+            const data = scenarioData.agents[agentId];
+            if (!data) return;
+
+            const tooltip = document.getElementById('agentTooltip');
+
+            let html = `<div class="tooltip-header">${agent.name} (${agent.type} - ${agent.rank})</div>`;
+
+            // Commission Earnings Section
+            if (data.personalSales.length > 0 || data.groupCommissions.length > 0) {
+                html += `<div class="tooltip-section">`;
+                html += `<div class="tooltip-row">
+                    <div class="label">💰 Personal Commission:</div>
+                    <div class="value">RM ${data.totalPersonal.toLocaleString()}</div>
+                </div>`;
+
+                html += `<div class="tooltip-row">
+                    <div class="label">🔗 Group Commission:</div>
+                    <div class="value">RM ${data.totalGroup.toLocaleString()}</div>
+                </div>`;
+
+                // Show CD Commission if this is the CD
+                if (agent.rank === 'CD' && data.totalCDRemainder > 0) {
+                    html += `<div class="tooltip-row">
+                        <div class="label">👑 CD Commission:</div>
+                        <div class="value">RM ${data.totalCDRemainder.toLocaleString()}</div>
+                    </div>`;
+                }
+
+                let totalEarnings = data.totalPersonal + data.totalGroup;
+                if (agent.rank === 'CD') {
+                    totalEarnings += data.totalCDRemainder;
+                }
+                html += `<div class="tooltip-row tooltip-divider">
+                    <div class="label"><strong>📊 Total Earnings:</strong></div>
+                    <div class="value" style="color: #28a745;"><strong>RM ${totalEarnings.toLocaleString()}</strong></div>
+                </div>`;
+                html += `</div>`;
+            }
+
+            // Agent Details Section
+            html += `<div class="tooltip-section info">`;
+            html += `<div class="tooltip-row">
+                <div class="label">💼 Lifetime Commission:</div>
+                <div class="value" style="color: #667eea;">RM ${agent.lifetimeCommission.toLocaleString()}</div>
+            </div>`;
+            html += `<div class="tooltip-row">
+                <div class="label">📅 Current Year Sales:</div>
+                <div class="value" style="color: #667eea;">RM ${agent.currentYearSales.toLocaleString()}</div>
+            </div>`;
+            html += `<div class="tooltip-row">
+                <div class="label">👥 Direct Recruits:</div>
+                <div class="value" style="color: #667eea;">${agent.directRecruits}</div>
+            </div>`;
+
+            // Show unlock status
+            const maxUnlockedGen = Math.min(agent.directRecruits, 4);
+            let unlockStatus = 'None (Need 1+ recruit)';
+            if (agent.directRecruits >= 1) {
+                unlockStatus = maxUnlockedGen === 1 ? 'Gen1 only' : `Gen1-${maxUnlockedGen}`;
+            }
+            html += `<div class="tooltip-row">
+                <div class="label">🔓 Unlocked Generations:</div>
+                <div class="value" style="color: #667eea;">${unlockStatus}</div>
+            </div>`;
+            html += `</div>`;
+
+            // Commission Breakdown Details
+            if (data.personalSales.length > 0) {
+                html += `<div style="background: #fff8e1; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 0.85em;">`;
+                html += `<strong>💰 Personal Sales:</strong><br>`;
+                data.personalSales.forEach((sale, idx) => {
+                    html += `Sale #${idx + 1}: RM ${sale.totalCommission.toLocaleString()} × ${(sale.tierRate * 100).toFixed(0)}% = <strong>RM ${sale.personalCommission.toLocaleString()}</strong><br>`;
+                });
+                html += `</div>`;
+            }
+
+            if (data.groupCommissions.length > 0) {
+                html += `<div style="background: #fff3e0; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 0.85em;">`;
+                html += `<strong>🔗 Group Overrides:</strong><br>`;
+                data.groupCommissions.forEach(override => {
+                    html += `From ${override.fromAgent} (Gen${override.generation}): ${(override.rate * 100).toFixed(1)}% = <strong>RM ${override.amount.toLocaleString()}</strong><br>`;
+                });
+                html += `</div>`;
+            }
+
+            // Add "View Detail" button
+            html += `<button class="tooltip-button" onclick="showSalespersonDetail(${scenarioIndex}, '${agentId}')">📋 View Detailed Breakdown</button>`;
+
+            tooltip.innerHTML = html;
+            tooltip.classList.add('active');
+
+            // Store current scenario index for reference
+            tooltip.dataset.scenarioIndex = scenarioIndex;
+
+            // Position tooltip near cursor
+            const x = event.clientX + 15;
+            const y = event.clientY + 15;
+
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+
+            // Adjust if tooltip goes off screen
+            setTimeout(() => {
+                const rect = tooltip.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    tooltip.style.left = (window.innerWidth - rect.width - 10) + 'px';
+                }
+                if (rect.bottom > window.innerHeight) {
+                    tooltip.style.top = (window.innerHeight - rect.height - 10) + 'px';
+                }
+            }, 10);
+        }
+
+        let tooltipTimeout = null; // Track tooltip hide timeout
+
+        function hideAgentTooltip() {
+            // Delay hiding to allow mouse to move to tooltip
+            tooltipTimeout = setTimeout(() => {
+                const tooltip = document.getElementById('agentTooltip');
+                tooltip.classList.remove('active');
+            }, 300); // 300ms delay
+        }
+
+        function keepTooltipVisible() {
+            // Cancel hide timeout when mouse enters tooltip
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+        }
+
+        function hideTooltipImmediately() {
+            // Hide immediately when mouse leaves tooltip
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            const tooltip = document.getElementById('agentTooltip');
+            tooltip.classList.remove('active');
+        }
+
+        // ===== MODAL DIALOG FUNCTIONS =====
+        function showSalespersonDetail(scenarioIndex, agentId) {
+            const scenarioData = allScenariosData[scenarioIndex];
+            if (!scenarioData) return;
+
+            const agentData = scenarioData.agents[agentId];
+            if (!agentData) return;
+
+            const modal = document.getElementById('detailModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            modalTitle.textContent = `${agentData.agent.name} - Complete Commission Breakdown`;
+
+            let html = '';
+
+            // Personal Sales Section
+            if (agentData.personalSales.length > 0) {
+                html += '<div class="modal-section">';
+                html += '<h3>💰 Personal Sales Commission</h3>';
+                html += '<table class="modal-table">';
+                html += '<thead><tr>';
+                html += '<th>Transaction</th>';
+                html += '<th>Total Commission</th>';
+                html += '<th>HQ Royalty</th>';
+                html += '<th>Tier Rate</th>';
+                html += '<th>Personal Earnings</th>';
+                html += '</tr></thead><tbody>';
+
+                agentData.personalSales.forEach((sale, index) => {
+                    html += '<tr>';
+                    html += `<td>Sale #${index + 1}</td>`;
+                    html += `<td>RM ${sale.totalCommission.toLocaleString()}</td>`;
+                    html += `<td>RM ${sale.hqRoyalty.toLocaleString()}</td>`;
+                    html += `<td>${(sale.tierRate * 100).toFixed(0)}%</td>`;
+                    html += `<td style="color: #28a745; font-weight: bold;">RM ${sale.personalCommission.toLocaleString()}</td>`;
+                    html += '</tr>';
+                });
+
+                html += '<tr style="background: #f8f9fa; font-weight: bold;">';
+                html += '<td colspan="4">Total Personal Commission</td>';
+                html += `<td style="color: #28a745;">RM ${agentData.totalPersonal.toLocaleString()}</td>`;
+                html += '</tr>';
+                html += '</tbody></table>';
+                html += '</div>';
+            }
+
+            // Group Commissions Section
+            if (agentData.groupCommissions.length > 0) {
+                html += '<div class="modal-section">';
+                html += '<h3>🔗 Group Override Commission</h3>';
+                html += '<p style="font-size: 0.9em; color: #6c757d; margin-bottom: 10px;">Overrides received from downline sales:</p>';
+                html += '<table class="modal-table">';
+                html += '<thead><tr>';
+                html += '<th>From Agent</th>';
+                html += '<th>Generation</th>';
+                html += '<th>Transaction Total</th>';
+                html += '<th>Override Type</th>';
+                html += '<th>Rate</th>';
+                html += '<th>Override Amount</th>';
+                html += '</tr></thead><tbody>';
+
+                agentData.groupCommissions.forEach(override => {
+                    html += '<tr>';
+                    const fromAgentDisplay = override.fromAgentTier
+                        ? `${override.fromAgent} (${(override.fromAgentTier * 100).toFixed(0)}%)`
+                        : override.fromAgent;
+                    html += `<td>${fromAgentDisplay}</td>`;
+                    html += `<td>Gen${override.generation}</td>`;
+                    html += `<td>RM ${override.transactionTotal.toLocaleString()}</td>`;
+                    html += `<td>${override.type}</td>`;
+
+                    let rateDisplay = '—';
+                    if (override.type === 'STANDARD' || override.type === 'REDUCED') {
+                        rateDisplay = `${(override.rate * 100).toFixed(1)}%`;
+                    } else if (override.type === 'GAP') {
+                        rateDisplay = `${(override.rate * 100).toFixed(0)}%`;
+                    }
+                    html += `<td>${rateDisplay}</td>`;
+                    html += `<td style="color: #ffc107; font-weight: bold;">RM ${override.amount.toLocaleString()}</td>`;
+                    html += '</tr>';
+                });
+
+                html += '<tr style="background: #f8f9fa; font-weight: bold;">';
+                html += '<td colspan="5">Total Group Commission</td>';
+                html += `<td style="color: #ffc107;">RM ${agentData.totalGroup.toLocaleString()}</td>`;
+                html += '</tr>';
+                html += '</tbody></table>';
+                html += '</div>';
+            }
+
+            // CD Commission Section (for CD only)
+            if (agentData.agent.rank === 'CD' && agentData.cdCommissions && agentData.cdCommissions.length > 0) {
+                html += '<div class="modal-section">';
+                html += '<h3>👑 CD Commission</h3>';
+                html += '<p style="font-size: 0.9em; color: #6c757d; margin-bottom: 10px;">Commission from all transactions after agent payouts, overrides, and HQ royalty:</p>';
+                html += '<table class="modal-table">';
+                html += '<thead><tr>';
+                html += '<th>From Agent</th>';
+                html += '<th>Transaction Total</th>';
+                html += '<th>CD Commission</th>';
+                html += '</tr></thead><tbody>';
+
+                agentData.cdCommissions.forEach(remainder => {
+                    html += '<tr>';
+                    const fromAgentDisplay = remainder.fromAgentTier
+                        ? `${remainder.fromAgent} (${(remainder.fromAgentTier * 100).toFixed(0)}%)`
+                        : remainder.fromAgent;
+                    html += `<td>${fromAgentDisplay}</td>`;
+                    html += `<td>RM ${remainder.transactionTotal.toLocaleString()}</td>`;
+                    html += `<td style="color: #6f42c1; font-weight: bold;">RM ${remainder.amount.toLocaleString()}</td>`;
+                    html += '</tr>';
+                });
+
+                html += '<tr style="background: #f8f9fa; font-weight: bold;">';
+                html += '<td colspan="2">Total CD Commission</td>';
+                html += `<td style="color: #6f42c1;">RM ${agentData.totalCDRemainder.toLocaleString()}</td>`;
+                html += '</tr>';
+                html += '</tbody></table>';
+                html += '</div>';
+            }
+
+            // Summary Section
+            html += '<div class="modal-section">';
+            html += '<h3>📊 Total Earnings</h3>';
+            html += '<table class="modal-table">';
+            html += '<tbody>';
+            html += '<tr>';
+            html += '<td>💰 Total Personal Commission</td>';
+            html += `<td style="color: #28a745; font-weight: bold; text-align: right;">RM ${agentData.totalPersonal.toLocaleString()}</td>`;
+            html += '</tr>';
+            html += '<tr>';
+            html += '<td>🔗 Total Group Override</td>';
+            html += `<td style="color: #ffc107; font-weight: bold; text-align: right;">RM ${agentData.totalGroup.toLocaleString()}</td>`;
+            html += '</tr>';
+            if (agentData.agent.rank === 'CD' && agentData.totalCDRemainder > 0) {
+                html += '<tr>';
+                html += '<td>👑 Total CD Commission</td>';
+                html += `<td style="color: #6f42c1; font-weight: bold; text-align: right;">RM ${agentData.totalCDRemainder.toLocaleString()}</td>`;
+                html += '</tr>';
+            }
+            html += '<tr style="background: #667eea; color: white; font-size: 1.2em;">';
+            html += '<td><strong>💎 GRAND TOTAL</strong></td>';
+            const grandTotal = agentData.totalPersonal + agentData.totalGroup + (agentData.totalCDRemainder || 0);
+            html += `<td style="text-align: right;"><strong>RM ${grandTotal.toLocaleString()}</strong></td>`;
+            html += '</tr>';
+            html += '</tbody></table>';
+            html += '</div>';
+
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDetailModal();
+            }
+        });
+
+        // Setup tooltip hover behavior to keep it visible when hovering over it
+        const agentTooltip = document.getElementById('agentTooltip');
+        agentTooltip.addEventListener('mouseenter', keepTooltipVisible);
+        agentTooltip.addEventListener('mouseleave', hideTooltipImmediately);
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 300);
+        });
+    </script>
+</body>
+</html>
